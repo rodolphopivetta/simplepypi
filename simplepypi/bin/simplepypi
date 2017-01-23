@@ -89,28 +89,19 @@ class PypiHandler(RequestHandler):
 class PypiPackageHandler(RequestHandler):
 
     def get(self, package):
+        error = True
         package = package.lower()
-
-        package_path = get_package_path(package)
-
-        if not os.path.exists(package_path):
-            write404(self)
-            return
-
-        versions = os.listdir(package_path)
-        versions.sort()
-
-        if len(versions) == 0:
-            write404(request)
-            return
-
-        if os.path.exists(package_path):
-            self.write(
-                '<html><body>{}</body></html>'.format(
-                    generate_package_link(package, versions[-1])
-                ))
-
-        else:
+        package_names = set([package, package.replace('-', '.')])
+        for package_name in package_names:
+            package_path = get_package_path(package_name)
+            if os.path.exists(package_path):
+                versions = os.listdir(package_path)
+                versions.sort()
+                if len(versions) > 0:
+                    if os.path.exists(package_path):
+                        error = False
+                        self.write('<html><body>{}</body></html>'.format(generate_package_link(package_name, versions[-1])))
+        if error:
             write404(self)
             return
 
